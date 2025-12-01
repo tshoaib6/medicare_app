@@ -9,6 +9,8 @@ import '../features/dashboard/screens/dashboard_screen.dart';
 import '../features/auth/screens/edit_profile_screen.dart';
 import '../features/questionnaire/screens/questionnaire_screen.dart';
 import '../features/questionnaire/screens/questionnaire_responses_screen.dart';
+import '../features/companies/screens/company_list_screen.dart';
+import '../features/companies/screens/company_details_screen.dart';
 
 class AppRouter {
   static Route<dynamic> onGenerateRoute(RouteSettings settings) {
@@ -42,6 +44,25 @@ class AppRouter {
       case QuestionnaireResponsesScreen.routeName:
         return MaterialPageRoute(
             builder: (_) => const QuestionnaireResponsesScreen());
+      case '/company-list':
+        final args = settings.arguments as Map<String, dynamic>;
+        return MaterialPageRoute(
+          builder: (_) => CompanyListScreen(
+            plan: args['plan'],
+            questionnaireId: args['questionnaireId'],
+            responseId: args['responseId'],
+          ),
+        );
+      case CompanyDetailsScreen.routeName:
+        final args = settings.arguments as Map<String, dynamic>;
+        return MaterialPageRoute(
+          builder: (_) => CompanyDetailsScreen(
+            company: args['company'],
+            plan: args['plan'],
+            questionnaireId: args['questionnaireId'],
+            responseId: args['responseId'],
+          ),
+        );
       case DashboardScreen.routeName:
       default:
         return MaterialPageRoute(builder: (_) => const DashboardScreen());

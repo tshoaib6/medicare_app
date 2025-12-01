@@ -6,6 +6,8 @@ import '../../auth/screens/login_screen.dart';
 import '../../auth/screens/edit_profile_screen.dart';
 import '../providers/plan_provider.dart';
 import '../../questionnaire/screens/questionnaire_screen.dart';
+import '../../../services/medicare_api_service.dart';
+import '../../ads/models/ad_model.dart';
 
 class DashboardScreen extends StatefulWidget {
   static const routeName = '/dashboard';
@@ -17,14 +19,17 @@ class DashboardScreen extends StatefulWidget {
 
 class _DashboardScreenState extends State<DashboardScreen> {
   bool _showInfo = false;
-  bool _showPopupAd = true;
+  bool _showPopupAd = false;
   String? _selectedPlan;
+  final _api = MedicareApiService.instance;
+  AdModel? _currentAd;
 
   @override
   void initState() {
     super.initState();
     _loadPlans();
     _loadUserProfile();
+    _loadAds();
   }
 
   void _loadPlans() {
@@ -46,6 +51,46 @@ class _DashboardScreenState extends State<DashboardScreen> {
     } catch (e) {
       // Handle error silently or show a snackbar
       debugPrint('Error loading user profile: $e');
+    }
+  }
+
+  void _loadAds() async {
+    try {
+      final adsResponse = await _api.ads.getActiveAds();
+      final ads = adsResponse['data'] as List<dynamic>;
+
+      if (ads.isNotEmpty) {
+        // Convert to AdModel and show the first active ad as popup
+        final adData = ads.first as Map<String, dynamic>;
+        final ad = AdModel.fromJson(adData);
+
+        if (ad.isCurrentlyActive && ad.hasValidContent) {
+          setState(() {
+            _currentAd = ad;
+            _showPopupAd = true;
+          });
+
+          // Track ad impression
+          try {
+            await _api.ads.trackAdImpression(ad.id);
+          } catch (e) {
+            debugPrint('Failed to track ad impression: $e');
+          }
+        } else {
+          setState(() {
+            _showPopupAd = false;
+          });
+        }
+      } else {
+        setState(() {
+          _showPopupAd = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading ads: $e');
+      setState(() {
+        _showPopupAd = false;
+      });
     }
   }
 
@@ -887,6 +932,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Widget _buildPopupAd() {
+    if (_currentAd == null) return const SizedBox.shrink();
+
+    final ad = _currentAd!;
+    final title = ad.title.isNotEmpty ? ad.title : 'Special Offer';
+    final description = ad.description.isNotEmpty
+        ? ad.description
+        : 'Don\'t miss this opportunity!';
+    final buttonText = ad.safeButtonText;
+    final imageUrl = ad.displayImageUrl;
+
     return Positioned.fill(
       child: Container(
         color: Colors.black.withValues(alpha: 0.4),
@@ -916,21 +971,52 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   padding: const EdgeInsets.all(20),
                   child: Column(
                     children: [
-                      const Text(
-                        'Special Medicare Enrollment',
-                        style: TextStyle(
+                      // Ad image (if available)
+                      if (imageUrl != null && imageUrl.isNotEmpty) ...[
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: Image.network(
+                            imageUrl,
+                            height: 120,
+                            width: double.infinity,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) =>
+                                Container(
+                              height: 120,
+                              width: double.infinity,
+                              decoration: BoxDecoration(
+                                color: Colors.grey.shade200,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: const Icon(Icons.image,
+                                  size: 48, color: Colors.grey),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                      ],
+                      // Ad title
+                      Text(
+                        title,
+                        style: const TextStyle(
                             fontSize: 20, fontWeight: FontWeight.bold),
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 8),
-                      const Text(
-                        'Save up to \$500/year on Medicare premiums!',
+                      // Ad description
+                      Text(
+                        description,
                         textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.grey.shade600,
+                        ),
                       ),
                       const SizedBox(height: 16),
+                      // Action button
                       ElevatedButton(
-                        onPressed: () => setState(() => _showPopupAd = false),
-                        child: const Text('Learn More'),
+                        onPressed: () => _handleAdClick(),
+                        child: Text(buttonText),
                       ),
                     ],
                   ),
@@ -941,5 +1027,37 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ),
       ),
     );
+  }
+
+  void _handleAdClick() async {
+    if (_currentAd == null) return;
+
+    final adId = _currentAd!.id;
+    final targetUrl = _currentAd!.targetUrl;
+
+    // Track ad click
+    try {
+      await _api.ads.trackAdClick(adId);
+    } catch (e) {
+      debugPrint('Failed to track ad click: $e');
+    }
+
+    // Close the popup
+    setState(() => _showPopupAd = false);
+
+    // Handle ad action (navigate to URL, specific screen, etc.)
+    if (targetUrl != null && targetUrl.isNotEmpty) {
+      // Could launch URL or navigate to specific screen based on target_url
+      debugPrint('Ad clicked - Target URL: $targetUrl');
+      // For now, just show a snackbar
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Redirecting to: $targetUrl'),
+            backgroundColor: Colors.blue,
+          ),
+        );
+      }
+    }
   }
 }

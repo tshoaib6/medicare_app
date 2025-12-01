@@ -1,292 +1,272 @@
 import '../../../core/network/api_client.dart';
 import '../../../core/network/endpoints.dart';
-import '../models/questionnaire_models.dart';
-import '../models/questionnaire_response_models.dart';
-import '../../dashboard/models/plan_model.dart';
 
 class QuestionnaireService {
   final ApiClient _apiClient = ApiClient();
 
-  // Existing methods
-  Future<PlanModel> getPlanDetails(int planId) async {
-    try {
-      final response = await _apiClient
-          .get<Map<String, dynamic>>(ApiEndpoints.planDetails(planId));
-      final data = response.data!['data'] as Map<String, dynamic>;
-      return PlanModel.fromJson(data);
-    } catch (e) {
-      throw Exception('Failed to get plan details: $e');
-    }
-  }
+  // =============================================================================
+  // QUESTIONNAIRE CORE APIs - Following Exact API Documentation
+  // =============================================================================
 
-  Future<Questionnaire> getQuestionnaire(int questionnaireId) async {
+  /// GET /api/v1/plans/{id} - Get Plan Details
+  Future<Map<String, dynamic>> getPlanDetails(int planId) async {
     try {
       final response = await _apiClient.get<Map<String, dynamic>>(
-          ApiEndpoints.questionnaireDetails(questionnaireId));
-      final data = response.data!['data'] as Map<String, dynamic>;
-      return Questionnaire.fromJson(data);
-    } catch (e) {
-      throw Exception('Failed to get questionnaire: $e');
-    }
-  }
-
-  // New API methods for questionnaire responses
-
-  /// GET /api/v1/my/questionnaire-responses
-  /// Fetches user's questionnaire response history
-  Future<QuestionnaireResponseList> getMyQuestionnaireResponses({
-    int page = 1,
-    int perPage = 10,
-  }) async {
-    try {
-      final response = await _apiClient.get<Map<String, dynamic>>(
-        '${ApiEndpoints.myQuestionnaireResponses}?page=$page&per_page=$perPage',
+        ApiEndpoints.planDetails(planId),
       );
 
       if (response.data == null) {
         throw Exception('No data received from server');
       }
 
-      return QuestionnaireResponseList.fromJson(response.data!);
+      return response.data!;
     } catch (e) {
-      // If API doesn't exist, return empty list for now
-      print('Questionnaire responses API not available: $e');
-      return QuestionnaireResponseList(
-        currentPage: page,
-        data: [],
-        totalPages: 1,
-        totalItems: 0,
-        perPage: perPage,
-      );
+      throw Exception('Failed to get plan details: $e');
     }
   }
 
-  /// POST /api/v1/questionnaires/{questionnaire_id}/start (or fallback)
-  /// Starts a new questionnaire session
-  Future<QuestionnaireResponse> startQuestionnaire(int questionnaireId) async {
+  /// GET /api/v1/questionnaires - Get All Questionnaires
+  Future<Map<String, dynamic>> getQuestionnaires({
+    String? search,
+    int? planId,
+    bool? isActive,
+    int page = 1,
+    int perPage = 15,
+  }) async {
     try {
-      // Try the new endpoint first
-      try {
-        final response = await _apiClient.post<Map<String, dynamic>>(
-          ApiEndpoints.startQuestionnaire(questionnaireId),
-          data: {},
-        );
+      Map<String, String> queryParams = {
+        'page': page.toString(),
+        'per_page': perPage.toString(),
+      };
 
-        if (response.data != null && response.data!['data'] != null) {
-          final data = response.data!['data'] as Map<String, dynamic>;
-          return QuestionnaireResponse.fromJson(data);
-        }
-      } catch (e) {
-        // If new endpoint doesn't exist, create a mock response
-        // This allows the app to work while backend implements the endpoint
-        print('New questionnaire API not available, using fallback: $e');
+      if (search != null) queryParams['search'] = search;
+      if (planId != null) queryParams['plan_id'] = planId.toString();
+      if (isActive != null) queryParams['is_active'] = isActive.toString();
+
+      final uri =
+          '${ApiEndpoints.questionnaires}?${Uri(queryParameters: queryParams).query}';
+
+      final response = await _apiClient.get<Map<String, dynamic>>(uri);
+
+      if (response.data == null) {
+        throw Exception('No data received from server');
       }
 
-      // Fallback: Create a mock response for development
-      final mockResponse = QuestionnaireResponse(
-        id: DateTime.now().millisecondsSinceEpoch, // Use timestamp as ID
-        userId: 1, // This should come from auth
-        questionnaireId: questionnaireId,
-        status: 'in_progress',
-        completionPercentage: 0,
-        startedAt: DateTime.now(),
+      return response.data!;
+    } catch (e) {
+      throw Exception('Failed to get questionnaires: $e');
+    }
+  }
+
+  /// GET /api/v1/questionnaires/{id} - Get Questionnaire Details
+  Future<Map<String, dynamic>> getQuestionnaire(int questionnaireId) async {
+    try {
+      final response = await _apiClient.get<Map<String, dynamic>>(
+        ApiEndpoints.questionnaireDetails(questionnaireId),
       );
 
-      return mockResponse;
+      if (response.data == null) {
+        throw Exception('No data received from server');
+      }
+
+      return response.data!;
+    } catch (e) {
+      throw Exception('Failed to get questionnaire: $e');
+    }
+  }
+
+  /// GET /api/v1/questionnaires/{id}/questions - Get Questionnaire Questions
+  Future<Map<String, dynamic>> getQuestionnaireQuestions(
+      int questionnaireId) async {
+    try {
+      final response = await _apiClient.get<Map<String, dynamic>>(
+        ApiEndpoints.questionnaireQuestions(questionnaireId),
+      );
+
+      if (response.data == null) {
+        throw Exception('No data received from server');
+      }
+
+      return response.data!;
+    } catch (e) {
+      throw Exception('Failed to get questionnaire questions: $e');
+    }
+  }
+
+  // =============================================================================
+  // QUESTIONNAIRE RESPONSE APIs - Core Feature Implementation
+  // =============================================================================
+
+  /// POST /api/v1/questionnaires/{id}/start - Start a Questionnaire
+  Future<Map<String, dynamic>> startQuestionnaire(int questionnaireId) async {
+    try {
+      final response = await _apiClient.post<Map<String, dynamic>>(
+        ApiEndpoints.startQuestionnaire(questionnaireId),
+        data: {},
+      );
+
+      if (response.data == null) {
+        throw Exception('No response received from server');
+      }
+
+      return response.data!;
     } catch (e) {
       throw Exception('Failed to start questionnaire: $e');
     }
   }
 
-  /// POST /api/v1/questionnaire-responses/{response_id}/answers (or fallback)
-  /// Submits answers for a questionnaire response
+  /// POST /api/v1/questionnaire-responses/{id}/answers - Submit Answers
   Future<Map<String, dynamic>> submitAnswers({
     required int responseId,
-    required List<QuestionnaireResponseAnswer> answers,
+    required List<Map<String, dynamic>> answers,
   }) async {
     try {
-      if (answers.isEmpty) {
-        // For auto-save, empty answers are OK
-        return {'success': true, 'message': 'No answers to save'};
+      final response = await _apiClient.post<Map<String, dynamic>>(
+        ApiEndpoints.submitAnswers(responseId),
+        data: {'answers': answers},
+      );
+
+      if (response.data == null) {
+        throw Exception('No response received from server');
       }
 
-      // Try new endpoint first
-      try {
-        final request = SubmitAnswersRequest(
-          responseId: responseId,
-          answers: answers,
-        );
-
-        final response = await _apiClient.post<Map<String, dynamic>>(
-          ApiEndpoints.submitAnswers(responseId),
-          data: request.toJson(),
-        );
-
-        if (response.data != null) {
-          return response.data!;
-        }
-      } catch (e) {
-        print('New answer submission API not available, using fallback: $e');
-      }
-
-      // Fallback: Return success for development
-      return {
-        'success': true,
-        'message': 'Answers saved locally (API endpoint not implemented)',
-        'answers_count': answers.length
-      };
+      return response.data!;
     } catch (e) {
       throw Exception('Failed to submit answers: $e');
     }
   }
 
-  /// POST /api/v1/questionnaire-responses/{response_id}/complete (or fallback)
-  /// Marks a questionnaire response as completed
-  Future<QuestionnaireResponse> completeQuestionnaire(int responseId) async {
+  /// POST /api/v1/questionnaire-responses/{id}/complete - Complete Questionnaire
+  Future<Map<String, dynamic>> completeQuestionnaire(int responseId) async {
     try {
-      // Try new endpoint first
-      try {
-        final response = await _apiClient.post<Map<String, dynamic>>(
-          ApiEndpoints.completeQuestionnaire(responseId),
-          data: {},
-        );
-
-        if (response.data != null && response.data!['data'] != null) {
-          final data = response.data!['data'] as Map<String, dynamic>;
-          return QuestionnaireResponse.fromJson(data);
-        }
-      } catch (e) {
-        print('Complete questionnaire API not available, using fallback: $e');
-      }
-
-      // Fallback: Return completed response
-      final completedResponse = QuestionnaireResponse(
-        id: responseId,
-        userId: 1,
-        questionnaireId: 1,
-        status: 'completed',
-        completionPercentage: 100,
-        startedAt: DateTime.now().subtract(const Duration(minutes: 15)),
-        completedAt: DateTime.now(),
-        timeTaken: 15,
+      final response = await _apiClient.post<Map<String, dynamic>>(
+        ApiEndpoints.completeQuestionnaire(responseId),
+        data: {},
       );
 
-      return completedResponse;
+      if (response.data == null) {
+        throw Exception('No response received from server');
+      }
+
+      return response.data!;
     } catch (e) {
       throw Exception('Failed to complete questionnaire: $e');
     }
   }
 
-  /// GET /api/v1/questionnaire-responses/{response_id}
-  /// Gets a specific questionnaire response details
-  Future<QuestionnaireResponse> getQuestionnaireResponse(int responseId) async {
+  /// GET /api/v1/my/questionnaire-responses - Get My Questionnaire Responses
+  Future<Map<String, dynamic>> getMyQuestionnaireResponses({
+    int page = 1,
+    int perPage = 15,
+  }) async {
+    try {
+      Map<String, String> queryParams = {
+        'page': page.toString(),
+        'per_page': perPage.toString(),
+      };
+
+      final uri =
+          '${ApiEndpoints.myQuestionnaireResponses}?${Uri(queryParameters: queryParams).query}';
+
+      final response = await _apiClient.get<Map<String, dynamic>>(uri);
+
+      if (response.data == null) {
+        throw Exception('No data received from server');
+      }
+
+      return response.data!;
+    } catch (e) {
+      throw Exception('Failed to fetch questionnaire responses: $e');
+    }
+  }
+
+  /// GET /api/v1/questionnaire-responses/{id} - Get Specific Response Details
+  Future<Map<String, dynamic>> getQuestionnaireResponse(int responseId) async {
     try {
       final response = await _apiClient.get<Map<String, dynamic>>(
         ApiEndpoints.getQuestionnaireResponse(responseId),
       );
 
-      if (response.data == null || response.data!['data'] == null) {
-        throw Exception('Invalid response format from server');
+      if (response.data == null) {
+        throw Exception('No data received from server');
       }
 
-      final data = response.data!['data'] as Map<String, dynamic>;
-      return QuestionnaireResponse.fromJson(data);
+      return response.data!;
     } catch (e) {
       throw Exception('Failed to get questionnaire response: $e');
     }
   }
 
-  // Helper methods for answer conversion
+  // =============================================================================
+  // HELPER METHODS - Answer Formatting & Validation
+  // =============================================================================
 
-  /// Converts internal answer format to API format
-  List<QuestionnaireResponseAnswer> convertAnswersToApiFormat(
-    Map<int, dynamic> answers,
-    List<Question> questions,
-  ) {
-    final apiAnswers = <QuestionnaireResponseAnswer>[];
+  /// Convert UI answers to API format
+  /// Following the exact API specification for answer submission
+  List<Map<String, dynamic>> formatAnswersForAPI(Map<int, dynamic> uiAnswers) {
+    final List<Map<String, dynamic>> apiAnswers = [];
 
-    for (final entry in answers.entries) {
+    for (final entry in uiAnswers.entries) {
       final questionId = entry.key;
-      final answerValue = entry.value;
+      final answer = entry.value;
 
-      final question = questions.firstWhere(
-        (q) => q.id == questionId,
-        orElse: () => throw Exception('Question $questionId not found'),
-      );
+      Map<String, dynamic> formattedAnswer = {
+        'question_id': questionId,
+        'answer_value': null,
+        'answer_text': null,
+      };
 
-      QuestionnaireResponseAnswer apiAnswer;
-
-      switch (question.questionType) {
-        case 'single_choice':
-          // Single choice: convert to list format for API
-          apiAnswer = QuestionnaireResponseAnswer(
-            questionId: questionId,
-            answerValue: answerValue != null ? [answerValue] : null,
-            answerText: null,
-          );
-          break;
-
-        case 'multiple_choice':
-          // Multiple choice: already in list format
-          apiAnswer = QuestionnaireResponseAnswer(
-            questionId: questionId,
-            answerValue: answerValue is List ? answerValue : null,
-            answerText: null,
-          );
-          break;
-
-        case 'text':
-          // Text input
-          apiAnswer = QuestionnaireResponseAnswer(
-            questionId: questionId,
-            answerValue: null,
-            answerText: answerValue?.toString(),
-          );
-          break;
-
-        default:
-          throw Exception(
-              'Unsupported question type: ${question.questionType}');
+      if (answer is String && answer.isNotEmpty) {
+        // Text answer
+        formattedAnswer['answer_text'] = answer;
+      } else if (answer is List && answer.isNotEmpty) {
+        // Multiple choice answer - convert to option IDs
+        formattedAnswer['answer_value'] = answer;
+      } else if (answer != null) {
+        // Single choice answer - wrap in array
+        formattedAnswer['answer_value'] = [answer];
       }
 
-      // Only add non-empty answers
-      if (apiAnswer.answerValue?.isNotEmpty == true ||
-          apiAnswer.answerText?.isNotEmpty == true) {
-        apiAnswers.add(apiAnswer);
+      // Only include answers that have values
+      if (formattedAnswer['answer_value'] != null ||
+          formattedAnswer['answer_text'] != null) {
+        apiAnswers.add(formattedAnswer);
       }
     }
 
     return apiAnswers;
   }
 
-  /// Validates answers before submission
+  /// Validate answers based on question requirements
   List<String> validateAnswers(
-    Map<int, dynamic> answers,
-    List<Question> questions,
-  ) {
-    final errors = <String>[];
+      Map<int, dynamic> answers, List<dynamic> questions) {
+    final List<String> errors = [];
 
     for (final question in questions) {
-      if (!question.isRequired) continue;
+      final questionId = question['id'] as int;
+      final isRequired = question['is_required'] as bool? ?? false;
+      final questionText =
+          question['question_text'] as String? ?? 'Question $questionId';
+      final questionType = question['type'] as String? ?? 'text';
 
-      final answer = answers[question.id];
+      if (!isRequired) continue;
 
-      switch (question.questionType) {
+      final answer = answers[questionId];
+
+      switch (questionType) {
         case 'single_choice':
           if (answer == null) {
-            errors.add('Question "${question.questionText}" is required');
+            errors.add('$questionText is required');
           }
           break;
-
         case 'multiple_choice':
           if (answer == null || (answer is List && answer.isEmpty)) {
-            errors.add('Question "${question.questionText}" is required');
+            errors.add('$questionText is required');
           }
           break;
-
         case 'text':
           if (answer == null || answer.toString().trim().isEmpty) {
-            errors.add('Question "${question.questionText}" is required');
+            errors.add('$questionText is required');
           }
           break;
       }
@@ -295,8 +275,52 @@ class QuestionnaireService {
     return errors;
   }
 
-  /// Submit questionnaire using existing endpoint
-  /// This uses the current working endpoint until new API is implemented
+  // =============================================================================
+  // HIGH-LEVEL WORKFLOW METHODS
+  // =============================================================================
+
+  /// Complete questionnaire workflow - handles full submission process
+  Future<Map<String, dynamic>> submitQuestionnaireWorkflow({
+    required int responseId,
+    required Map<int, dynamic> answers,
+    required List<dynamic> questions,
+  }) async {
+    try {
+      // 1. Validate answers
+      final validationErrors = validateAnswers(answers, questions);
+      if (validationErrors.isNotEmpty) {
+        throw Exception('Validation failed: ${validationErrors.join(', ')}');
+      }
+
+      // 2. Format answers for API
+      final formattedAnswers = formatAnswersForAPI(answers);
+
+      if (formattedAnswers.isEmpty) {
+        throw Exception('No valid answers to submit');
+      }
+
+      // 3. Submit answers
+      final submitResult = await submitAnswers(
+        responseId: responseId,
+        answers: formattedAnswers,
+      );
+
+      // 4. Complete questionnaire
+      final completeResult = await completeQuestionnaire(responseId);
+
+      return {
+        'success': true,
+        'message': 'Questionnaire completed successfully',
+        'submit_result': submitResult,
+        'complete_result': completeResult,
+      };
+    } catch (e) {
+      throw Exception('Failed to complete questionnaire workflow: $e');
+    }
+  }
+
+  /// Legacy method for backward compatibility
+  @Deprecated('Use submitQuestionnaireWorkflow instead')
   Future<Map<String, dynamic>> submitQuestionnaireAnswers({
     required int questionnaireId,
     required Map<String, dynamic> answers,
@@ -309,33 +333,6 @@ class QuestionnaireService {
       return response.data ?? {};
     } catch (e) {
       throw Exception('Failed to submit questionnaire: $e');
-    }
-  }
-
-  /// Complete questionnaire workflow using existing API
-  Future<Map<String, dynamic>> completeQuestionnaireWorkflow({
-    required int questionnaireId,
-    required Map<int, dynamic> answers,
-    required List<Question> questions,
-  }) async {
-    try {
-      // Validate answers
-      final validationErrors = validateAnswers(answers, questions);
-      if (validationErrors.isNotEmpty) {
-        throw Exception('Validation failed: ${validationErrors.join(', ')}');
-      }
-
-      // Convert to legacy format
-      final legacyAnswers =
-          answers.map((key, value) => MapEntry(key.toString(), value));
-
-      // Submit using existing endpoint
-      return await submitQuestionnaireAnswers(
-        questionnaireId: questionnaireId,
-        answers: legacyAnswers,
-      );
-    } catch (e) {
-      throw Exception('Failed to complete questionnaire workflow: $e');
     }
   }
 }

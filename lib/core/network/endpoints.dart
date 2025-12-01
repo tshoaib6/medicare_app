@@ -17,6 +17,8 @@ class ApiEndpoints {
   static const String verifyOtp = '/auth/email/verify/confirm';
   static const String forgotPassword = '/auth/password/forgot';
   static const String resetPassword = '/auth/password/reset';
+  static const String logout = '/auth/logout';
+  static const String me = '/auth/me';
 
   // 🏢 Public Company & Plan Browsing
   static const String companies = '/companies';
@@ -30,40 +32,34 @@ class ApiEndpoints {
   static String questionnaireQuestions(int id) =>
       '/questionnaires/$id/questions';
 
-  // 📊 Questionnaire Responses (Protected)
-  static const String myQuestionnaireResponses = '/my/questionnaire-responses';
-
-  // Alternative endpoints - adjust based on your actual API
+  // 📊 Questionnaire Responses APIs (Protected)
   static String startQuestionnaire(int questionnaireId) =>
-      '/questionnaires/$questionnaireId/responses'; // Alternative endpoint
-  static String submitQuestionnaireAnswers(int questionnaireId) =>
-      '/questionnaires/$questionnaireId/submit'; // Existing endpoint
-
-  // Future endpoints when backend implements them
+      '/questionnaires/$questionnaireId/start';
   static String submitAnswers(int responseId) =>
       '/questionnaire-responses/$responseId/answers';
   static String completeQuestionnaire(int responseId) =>
       '/questionnaire-responses/$responseId/complete';
   static String getQuestionnaireResponse(int responseId) =>
       '/questionnaire-responses/$responseId';
+  static const String myQuestionnaireResponses = '/my/questionnaire-responses';
 
-  // 📢 Public Ads
+  // 👤 User Profile Management
+  static const String updateProfile = '/user/profile';
+
+  // 📞 User Callback Requests
+  static const String createCallbackRequest = '/callback-requests';
+  static const String myCallbackRequests = '/my/callback-requests';
+
+  // 📊 User Activity Logging
+  static const String logActivity = '/activities/log';
+  static const String myActivities = '/my/activities';
+
+  // 📢 Ads Management
   static const String activeAds = '/ads/active';
   static String adImpression(int id) => '/ads/$id/impression';
   static String adClick(int id) => '/ads/$id/click';
 
-  // 🔒 PROTECTED ENDPOINTS (Require Bearer Token)
-
-  // 👤 User Profile & Authentication
-  static const String logout = '/auth/logout';
-  static const String me = '/auth/me';
-  static const String updateProfile = '/user/profile';
-
-  // 📞 User Callback Requests
-  static const String myCallbackRequests = '/my/callback-requests';
-  static const String createCallbackRequest = '/callback-requests';
-
-  // 📊 User Activity Logs
-  static const String myActivities = '/my/activities';
-  static const String logActivity = '/activities/log';
+  // Legacy endpoint (for backward compatibility)
+  static String submitQuestionnaireAnswers(int questionnaireId) =>
+      '/questionnaires/$questionnaireId/submit';
 }

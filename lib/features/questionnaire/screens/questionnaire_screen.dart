@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../services/questionnaire_service.dart';
+import '../../../services/medicare_api_service.dart';
 import '../models/questionnaire_models.dart';
 import '../models/questionnaire_response_models.dart';
 import '../../dashboard/models/plan_model.dart';
@@ -22,7 +22,7 @@ class QuestionnaireScreen extends StatefulWidget {
 }
 
 class _QuestionnaireScreenState extends State<QuestionnaireScreen> {
-  final QuestionnaireService _service = QuestionnaireService();
+  final _api = MedicareApiService.instance;
 
   Questionnaire? _questionnaire;
   PlanModel? _plan;
@@ -46,17 +46,22 @@ class _QuestionnaireScreenState extends State<QuestionnaireScreen> {
       setState(() => _loading = true);
 
       // Load plan and questionnaire data
-      final plan = await _service.getPlanDetails(widget.planId);
+      final planResponse = await _api.companies.getPlan(widget.planId);
+      final questionnaireResponse =
+          await _api.questionnaires.getQuestionnaire(widget.questionnaireId);
+
+      final plan = PlanModel.fromJson(planResponse['data']);
       final questionnaire =
-          await _service.getQuestionnaire(widget.questionnaireId);
+          Questionnaire.fromJson(questionnaireResponse['data']);
 
       QuestionnaireResponse? response;
 
       if (widget.responseId != null) {
         // Load existing response for continuation
         try {
-          response =
-              await _service.getQuestionnaireResponse(widget.responseId!);
+          final responseData = await _api.questionnaires
+              .getQuestionnaireResponse(widget.responseId!);
+          response = QuestionnaireResponse.fromJson(responseData['data']);
           // TODO: Load existing answers if needed
         } catch (e) {
           // If response not found, continue without response tracking
@@ -68,7 +73,9 @@ class _QuestionnaireScreenState extends State<QuestionnaireScreen> {
       // If no existing response, try to start a new one (but don't fail if API doesn't exist)
       if (response == null) {
         try {
-          response = await _service.startQuestionnaire(widget.questionnaireId);
+          final startResponse = await _api.questionnaires
+              .startQuestionnaire(widget.questionnaireId);
+          response = QuestionnaireResponse.fromJson(startResponse['data']);
         } catch (e) {
           // If start questionnaire API doesn't exist, continue without response tracking
           print('Start questionnaire API not available: $e');
@@ -109,12 +116,11 @@ class _QuestionnaireScreenState extends State<QuestionnaireScreen> {
 
     try {
       // Convert current answers to API format
-      final apiAnswers = _service.convertAnswersToApiFormat(
-          _answers, _questionnaire!.questions);
+      final apiAnswers = _api.questionnaires.formatAnswersForAPI(_answers);
 
       if (apiAnswers.isNotEmpty) {
         // Submit answers silently
-        await _service.submitAnswers(
+        await _api.questionnaires.submitAnswers(
           responseId: _questionnaireResponse!.id,
           answers: apiAnswers,
         );
@@ -186,11 +192,11 @@ class _QuestionnaireScreenState extends State<QuestionnaireScreen> {
     try {
       setState(() => _submitting = true);
 
-      // Use the working questionnaire completion workflow
-      await _service.completeQuestionnaireWorkflow(
+      // Use the comprehensive questionnaire completion workflow
+      await _api.completeQuestionnaireWithTracking(
         questionnaireId: widget.questionnaireId,
+        planId: widget.planId,
         answers: _answers,
-        questions: _questionnaire!.questions,
       );
 
       if (mounted) {
@@ -201,7 +207,16 @@ class _QuestionnaireScreenState extends State<QuestionnaireScreen> {
             backgroundColor: Colors.green,
           ),
         );
-        Navigator.of(context).pop(true); // Return true to indicate completion
+
+        // Navigate to company list screen
+        Navigator.of(context).pushReplacementNamed(
+          '/company-list',
+          arguments: {
+            'plan': _plan!,
+            'questionnaireId': widget.questionnaireId,
+            'responseId': _questionnaireResponse?.id ?? 0,
+          },
+        );
       }
     } catch (e) {
       if (mounted) {

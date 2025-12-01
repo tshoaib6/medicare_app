@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../services/questionnaire_service.dart';
+import '../../../services/medicare_api_service.dart';
 import '../models/questionnaire_response_models.dart';
 
 class QuestionnaireResponsesScreen extends StatefulWidget {
@@ -14,7 +14,7 @@ class QuestionnaireResponsesScreen extends StatefulWidget {
 
 class _QuestionnaireResponsesScreenState
     extends State<QuestionnaireResponsesScreen> {
-  final QuestionnaireService _service = QuestionnaireService();
+  final _api = MedicareApiService.instance;
 
   QuestionnaireResponseList? _responseList;
   bool _loading = true;
@@ -34,13 +34,14 @@ class _QuestionnaireResponsesScreenState
         _error = null;
       });
 
-      final responses = await _service.getMyQuestionnaireResponses(
+      final responsesData =
+          await _api.questionnaires.getMyQuestionnaireResponses(
         page: page,
         perPage: 10,
       );
 
       setState(() {
-        _responseList = responses;
+        _responseList = QuestionnaireResponseList.fromJson(responsesData);
         _currentPage = page;
         _loading = false;
       });
