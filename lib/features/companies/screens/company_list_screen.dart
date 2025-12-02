@@ -3,6 +3,7 @@ import '../../../services/medicare_api_service.dart';
 import '../../dashboard/models/plan_model.dart' as plan_model;
 import '../models/company_model.dart';
 import 'company_details_screen.dart';
+import '../../../core/widgets/info_button_widget.dart';
 
 class CompanyListScreen extends StatefulWidget {
   static const routeName = '/company-list';
@@ -187,6 +188,9 @@ class _CompanyListScreenState extends State<CompanyListScreen> {
           ),
         ],
       ),
+      actions: const [
+        InfoAppBarAction(),
+      ],
       bottom: PreferredSize(
         preferredSize: const Size.fromHeight(1),
         child: Container(

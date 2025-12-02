@@ -8,6 +8,7 @@ import '../providers/plan_provider.dart';
 import '../../questionnaire/screens/questionnaire_screen.dart';
 import '../../../services/medicare_api_service.dart';
 import '../../ads/models/ad_model.dart';
+import '../../../core/widgets/info_button_widget.dart';
 
 class DashboardScreen extends StatefulWidget {
   static const routeName = '/dashboard';
@@ -18,7 +19,6 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
-  bool _showInfo = false;
   bool _showPopupAd = false;
   String? _selectedPlan;
   final _api = MedicareApiService.instance;
@@ -123,6 +123,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
     if (result == true && mounted) {
       await context.read<AuthProvider>().logout();
+      // Also clear user provider data
+      context.read<UserProvider>().clearUser();
       if (mounted) {
         Navigator.of(context).pushReplacementNamed(LoginScreen.routeName);
       }
@@ -148,11 +150,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
             Positioned(
               top: MediaQuery.of(context).padding.top + 60,
               right: 16,
-              child: _buildInfoButton(),
+              child: const InfoButtonWidget(),
             ),
-
-          // Info modal
-          if (_showInfo && !_showPopupAd) _buildInfoModal(),
 
           // Popup Ad
           if (_showPopupAd) _buildPopupAd(),
@@ -164,11 +163,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget _buildHeader() {
     return Consumer2<AuthProvider, UserProvider>(
       builder: (context, authProvider, userProvider, child) {
-        // Try to get user from AuthProvider first, then UserProvider
-        final user = authProvider.user ?? userProvider.user;
-        final fullName = user != null && user.firstName.isNotEmpty
-            ? '${user.firstName} ${user.lastName}'.trim()
-            : 'Guest User';
+        // Determine user display based on auth status
+        String fullName;
+        if (authProvider.isGuest) {
+          fullName = 'Guest User';
+        } else if (authProvider.isAuthenticated ||
+            authProvider.status == AuthStatus.profileIncomplete) {
+          final user = authProvider.user;
+          fullName = user != null && user.firstName.isNotEmpty
+              ? '${user.firstName} ${user.lastName}'.trim()
+              : 'User';
+        } else {
+          fullName = 'Guest User';
+        }
 
         return Container(
           color: Colors.white,
@@ -215,11 +222,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         icon: const Icon(Icons.notifications_outlined),
                         iconSize: 20,
                       ),
-                      IconButton(
-                        onPressed: () => setState(() => _showInfo = true),
-                        icon: const Icon(Icons.settings_outlined),
-                        iconSize: 20,
-                      ),
+                      const InfoAppBarAction(),
                       // User dropdown
                       PopupMenuButton<String>(
                         onSelected: (value) {
@@ -234,6 +237,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               break;
                             case 'logout':
                               _logout();
+                              break;
+                            case 'login':
+                              Navigator.of(context)
+                                  .pushNamed(LoginScreen.routeName);
                               break;
                           }
                         },
@@ -265,38 +272,55 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           ),
                         ),
                         itemBuilder: (context) => [
-                          const PopupMenuItem(
-                            value: 'profile',
-                            child: Row(
-                              children: [
-                                Icon(Icons.person_outline, size: 16),
-                                SizedBox(width: 12),
-                                Text('Profile'),
-                              ],
+                          if (!authProvider.isGuest) ...[
+                            const PopupMenuItem(
+                              value: 'profile',
+                              child: Row(
+                                children: [
+                                  Icon(Icons.person_outline, size: 16),
+                                  SizedBox(width: 12),
+                                  Text('Profile'),
+                                ],
+                              ),
                             ),
-                          ),
-                          const PopupMenuItem(
-                            value: 'questionnaires',
-                            child: Row(
-                              children: [
-                                Icon(Icons.quiz_outlined, size: 16),
-                                SizedBox(width: 12),
-                                Text('My Questionnaires'),
-                              ],
+                            const PopupMenuItem(
+                              value: 'questionnaires',
+                              child: Row(
+                                children: [
+                                  Icon(Icons.quiz_outlined, size: 16),
+                                  SizedBox(width: 12),
+                                  Text('My Questionnaires'),
+                                ],
+                              ),
                             ),
-                          ),
-                          const PopupMenuDivider(),
-                          PopupMenuItem(
-                            value: 'logout',
-                            child: Row(
-                              children: [
-                                Icon(Icons.logout, size: 16, color: Colors.red),
-                                const SizedBox(width: 12),
-                                const Text('Logout',
-                                    style: TextStyle(color: Colors.red)),
-                              ],
+                            const PopupMenuDivider(),
+                            PopupMenuItem(
+                              value: 'logout',
+                              child: Row(
+                                children: [
+                                  Icon(Icons.logout,
+                                      size: 16, color: Colors.red),
+                                  const SizedBox(width: 12),
+                                  const Text('Logout',
+                                      style: TextStyle(color: Colors.red)),
+                                ],
+                              ),
                             ),
-                          ),
+                          ] else ...[
+                            PopupMenuItem(
+                              value: 'login',
+                              child: Row(
+                                children: [
+                                  Icon(Icons.login,
+                                      size: 16, color: Colors.blue.shade600),
+                                  const SizedBox(width: 12),
+                                  Text('Sign In',
+                                      style: TextStyle(
+                                          color: Colors.blue.shade600)),
+                                ],
+                              ),
+                            ),
+                          ],
                         ],
                       ),
                     ],
@@ -313,11 +337,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget _buildMainContent() {
     return Consumer2<AuthProvider, UserProvider>(
       builder: (context, authProvider, userProvider, child) {
-        // Try to get user from AuthProvider first, then UserProvider
-        final user = authProvider.user ?? userProvider.user;
-        final firstName = user != null && user.firstName.isNotEmpty
-            ? user.firstName
-            : 'Guest';
+        // Determine first name based on auth status
+        String firstName;
+        if (authProvider.isGuest) {
+          firstName = 'Guest';
+        } else if (authProvider.isAuthenticated ||
+            authProvider.status == AuthStatus.profileIncomplete) {
+          final user = authProvider.user;
+          firstName = user != null && user.firstName.isNotEmpty
+              ? user.firstName
+              : 'User';
+        } else {
+          firstName = 'Guest';
+        }
 
         return SingleChildScrollView(
           padding: const EdgeInsets.all(16),
@@ -954,56 +986,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
             'Medicare Open Enrollment ends December 7th. Review your plan options before the deadline.',
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildInfoButton() {
-    return FloatingActionButton.small(
-      onPressed: () => setState(() => _showInfo = true),
-      backgroundColor: Colors.white,
-      child: Icon(Icons.info_outline, color: Colors.blue.shade600),
-    );
-  }
-
-  Widget _buildInfoModal() {
-    return Positioned.fill(
-      child: Container(
-        color: Colors.black.withValues(alpha: 0.5),
-        child: Center(
-          child: Container(
-            margin: const EdgeInsets.all(16),
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    const Text(
-                      'Dashboard Information',
-                      style:
-                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                    ),
-                    const Spacer(),
-                    IconButton(
-                      onPressed: () => setState(() => _showInfo = false),
-                      icon: const Icon(Icons.close),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                const Text(
-                  'Welcome to your Medicare+ Dashboard. This is your central hub for managing all your Medicare benefits and healthcare needs.',
-                ),
-              ],
-            ),
-          ),
-        ),
       ),
     );
   }

@@ -7,6 +7,7 @@ import '../../../core/utils/validators.dart';
 import '../../../core/theme/colors.dart';
 import '../providers/user_provider.dart';
 import '../../dashboard/screens/dashboard_screen.dart';
+import '../../../core/widgets/info_button_widget.dart';
 
 class EditProfileScreen extends StatefulWidget {
   static const routeName = '/edit-profile';
@@ -135,84 +136,94 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           ? const Center(
               child: CircularProgressIndicator(),
             )
-          : SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: SingleChildScrollView(
-                  child: Column(
-                    children: [
-                      // Header with Medicare+ Logo
-                      Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        child: Column(
-                          children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
+          : Stack(
+              children: [
+                SafeArea(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: SingleChildScrollView(
+                      child: Column(
+                        children: [
+                          // Header with Medicare+ Logo
+                          Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            child: Column(
                               children: [
-                                Stack(
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                    Icon(
-                                      Icons.shield_outlined,
-                                      size: 40,
-                                      color: AppColors.info,
+                                    Stack(
+                                      children: [
+                                        Icon(
+                                          Icons.shield_outlined,
+                                          size: 40,
+                                          color: AppColors.info,
+                                        ),
+                                        Positioned(
+                                          top: 10,
+                                          left: 10,
+                                          child: Icon(
+                                            Icons.favorite,
+                                            size: 20,
+                                            color: AppColors.destructive,
+                                          ),
+                                        ),
+                                      ],
                                     ),
-                                    Positioned(
-                                      top: 10,
-                                      left: 10,
-                                      child: Icon(
-                                        Icons.favorite,
-                                        size: 20,
-                                        color: AppColors.destructive,
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      'MediCare+',
+                                      style: theme.textTheme.headlineMedium
+                                          ?.copyWith(
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.black87,
                                       ),
                                     ),
                                   ],
                                 ),
-                                const SizedBox(width: 8),
+                                const SizedBox(height: 8),
                                 Text(
-                                  'MediCare+',
-                                  style:
-                                      theme.textTheme.headlineMedium?.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.black87,
+                                  'Complete your consumer information',
+                                  style: theme.textTheme.bodyMedium?.copyWith(
+                                    color: AppColors.textSecondary,
                                   ),
                                 ),
                               ],
                             ),
-                            const SizedBox(height: 8),
-                            Text(
-                              'Complete your consumer information',
-                              style: theme.textTheme.bodyMedium?.copyWith(
-                                color: AppColors.textSecondary,
-                              ),
+                          ),
+
+                          const SizedBox(height: 16),
+
+                          // Helpline Call Card
+                          _buildHelplineCard(theme),
+
+                          const SizedBox(height: 16),
+
+                          // Consumer Info Form Card
+                          _buildConsumerInfoForm(theme),
+
+                          const SizedBox(height: 16),
+
+                          // Note at bottom
+                          Text(
+                            'Required fields are marked with an asterisk (*). Complete your MediCare+ profile setup.',
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: AppColors.textSecondary,
                             ),
-                          ],
-                        ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
                       ),
-
-                      const SizedBox(height: 16),
-
-                      // Helpline Call Card
-                      _buildHelplineCard(theme),
-
-                      const SizedBox(height: 16),
-
-                      // Consumer Info Form Card
-                      _buildConsumerInfoForm(theme),
-
-                      const SizedBox(height: 16),
-
-                      // Note at bottom
-                      Text(
-                        'Required fields are marked with an asterisk (*). Complete your MediCare+ profile setup.',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: AppColors.textSecondary,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ],
+                    ),
                   ),
                 ),
-              ),
+                // Info button positioned at top right
+                Positioned(
+                  top: 16,
+                  right: 16,
+                  child: const InfoButtonWidget(),
+                ),
+              ],
             ),
     );
   }

@@ -3,6 +3,7 @@ import '../../../services/medicare_api_service.dart';
 import '../models/questionnaire_models.dart';
 import '../models/questionnaire_response_models.dart';
 import '../../dashboard/models/plan_model.dart';
+import '../../../core/widgets/info_button_widget.dart';
 
 class QuestionnaireScreen extends StatefulWidget {
   static const routeName = '/questionnaire';
@@ -426,7 +427,7 @@ class _QuestionnaireScreenState extends State<QuestionnaireScreen> {
                       ],
                     ),
                     const Spacer(),
-                    // Progress
+                    // Progress and Info Button
                     Row(
                       children: [
                         Text(
@@ -444,6 +445,8 @@ class _QuestionnaireScreenState extends State<QuestionnaireScreen> {
                                 Colors.blue.shade600),
                           ),
                         ),
+                        const SizedBox(width: 12),
+                        const InfoAppBarAction(),
                       ],
                     ),
                   ],

@@ -7,6 +7,7 @@ import '../../../core/widgets/primary_button.dart';
 import '../../../core/utils/validators.dart';
 import '../../dashboard/screens/dashboard_screen.dart';
 import '../providers/auth_provider.dart';
+import '../providers/user_provider.dart';
 import 'signup_screen.dart';
 import 'forgot_password_screen.dart';
 import 'otp_verification_screen.dart';
@@ -181,7 +182,10 @@ class _LoginScreenState extends State<LoginScreen> {
 
   void _continueAsGuest() {
     final auth = context.read<AuthProvider>();
+    final userProvider = context.read<UserProvider>();
+
     auth.setGuestMode();
+    userProvider.clearUser();
     Navigator.of(context).pushReplacementNamed(DashboardScreen.routeName);
   }
 
