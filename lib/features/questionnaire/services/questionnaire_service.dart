@@ -29,7 +29,7 @@ class QuestionnaireService {
   Future<Map<String, dynamic>> getQuestionnaires({
     String? search,
     int? planId,
-    bool? isActive,
+    String? status, // 'active' or 'inactive'
     int page = 1,
     int perPage = 15,
   }) async {
@@ -39,9 +39,9 @@ class QuestionnaireService {
         'per_page': perPage.toString(),
       };
 
-      if (search != null) queryParams['search'] = search;
+      if (search != null && search.isNotEmpty) queryParams['search'] = search;
       if (planId != null) queryParams['plan_id'] = planId.toString();
-      if (isActive != null) queryParams['is_active'] = isActive.toString();
+      if (status != null) queryParams['status'] = status;
 
       final uri =
           '${ApiEndpoints.questionnaires}?${Uri(queryParameters: queryParams).query}';

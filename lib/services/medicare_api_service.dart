@@ -107,27 +107,38 @@ class MedicareApiService {
 
   /// Submit callback request with activity tracking
   Future<Map<String, dynamic>> submitCallbackWithTracking({
-    required String name,
-    required String phoneNumber,
-    required String preferredTime,
-    String? email,
+    required int userId,
+    required int companyId,
+    required String callDate,
+    required String callTime,
     String? message,
-    int? planId,
   }) async {
     try {
       // 1. Submit callback request
       final callbackResult = await callbacks.submitCallbackRequest(
-        name: name,
-        phoneNumber: phoneNumber,
-        preferredTime: preferredTime,
-        email: email,
+        userId: userId,
+        companyId: companyId,
+        callDate: callDate,
+        callTime: callTime,
         message: message,
-        planId: planId,
+        status: 'pending',
       );
 
       // 2. Log callback activity
       try {
-        await activities.logCallbackRequest(planId, preferredTime);
+        await activities.logActivity(
+          action: 'callback_request_submitted',
+          description:
+              'User submitted callback request for company ID: $companyId',
+          metadata: {
+            'user_id': userId,
+            'company_id': companyId,
+            'call_date': callDate,
+            'call_time': callTime,
+            'message': message ?? '',
+            'request_timestamp': DateTime.now().toIso8601String(),
+          },
+        );
       } catch (e) {
         print('Failed to log callback activity: $e');
       }
@@ -273,38 +284,50 @@ class MedicareApiService {
     }
   }
 
-  /// Request callback for a specific company (convenience method)
-  Future<void> requestCallback({
+  /// Submit callback request with user information
+  /// This method provides the complete callback request functionality
+  Future<Map<String, dynamic>> submitCallbackRequestWithDetails({
+    required int userId,
     required int companyId,
-    required String name,
-    required String phone,
-    required String preferredTime,
-    String? notes,
+    required String companyName,
+    required String callDate,
+    required String callTime,
+    String? message,
   }) async {
     try {
-      await callbacks.submitCallbackRequest(
-        name: name,
-        phoneNumber: phone,
-        preferredTime: preferredTime,
-        planId: companyId, // Using companyId as planId for callback
-        message: notes,
+      // Submit the callback request
+      final response = await callbacks.submitCallbackRequest(
+        userId: userId,
+        companyId: companyId,
+        callDate: callDate,
+        callTime: callTime,
+        message: message,
+        status: 'pending',
       );
 
       // Log the callback request activity
       await activities.logActivity(
-        action: 'callback_requested',
-        description: 'Callback requested for company ID: $companyId',
+        action: 'callback_request_submitted',
+        description: 'User submitted callback request for $companyName',
         metadata: {
+          'user_id': userId,
           'company_id': companyId,
-          'customer_name': name,
-          'customer_phone': phone,
-          'preferred_time': preferredTime,
-          'notes': notes ?? '',
+          'company_name': companyName,
+          'call_date': callDate,
+          'call_time': callTime,
+          'message': message ?? '',
           'request_timestamp': DateTime.now().toIso8601String(),
         },
       );
+
+      return response;
     } catch (e) {
-      throw Exception('Failed to request callback: $e');
+      // Return error response in the expected format
+      return {
+        'success': false,
+        'message': 'Failed to submit callback request: ${e.toString()}',
+        'errors': [e.toString()],
+      };
     }
   }
 

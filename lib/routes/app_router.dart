@@ -11,6 +11,7 @@ import '../features/questionnaire/screens/questionnaire_screen.dart';
 import '../features/questionnaire/screens/questionnaire_responses_screen.dart';
 import '../features/companies/screens/company_list_screen.dart';
 import '../features/companies/screens/company_details_screen.dart';
+import '../features/companies/screens/request_call_screen.dart';
 
 class AppRouter {
   static Route<dynamic> onGenerateRoute(RouteSettings settings) {
@@ -57,6 +58,16 @@ class AppRouter {
         final args = settings.arguments as Map<String, dynamic>;
         return MaterialPageRoute(
           builder: (_) => CompanyDetailsScreen(
+            company: args['company'],
+            plan: args['plan'],
+            questionnaireId: args['questionnaireId'],
+            responseId: args['responseId'],
+          ),
+        );
+      case RequestCallScreen.routeName:
+        final args = settings.arguments as Map<String, dynamic>;
+        return MaterialPageRoute(
+          builder: (_) => RequestCallScreen(
             company: args['company'],
             plan: args['plan'],
             questionnaireId: args['questionnaireId'],

@@ -4,6 +4,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../services/medicare_api_service.dart';
 import '../../dashboard/models/plan_model.dart' as plan_model;
 import '../models/company_model.dart';
+import 'request_call_screen.dart';
 
 class CompanyDetailsScreen extends StatefulWidget {
   static const routeName = '/company-details';
@@ -97,64 +98,18 @@ class _CompanyDetailsScreenState extends State<CompanyDetailsScreen> {
   }
 
   Future<void> _handleRequestCall() async {
-    setState(() => _loading = true);
-
-    try {
-      // Show callback request dialog
-      final result = await showDialog<Map<String, String>>(
-        context: context,
-        builder: (context) =>
-            _CallbackRequestDialog(companyName: widget.company.name),
-      );
-
-      if (result != null) {
-        // Submit callback request via API
-        await _api.requestCallback(
-          companyId: widget.company.id,
-          name: result['name']!,
-          phone: result['phone']!,
-          preferredTime: result['preferredTime']!,
-          notes: result['notes'],
-        );
-
-        // Log the callback request
-        await _api.activities.logActivity(
-          action: 'callback_requested',
-          description: 'Callback requested for company: ${widget.company.name}',
-          metadata: {
-            'company_id': widget.company.id,
-            'company_name': widget.company.name,
-            'plan_id': widget.plan.id,
-            'customer_name': result['name'],
-            'customer_phone': result['phone'],
-            'preferred_time': result['preferredTime'],
-          },
-        );
-
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Callback request submitted successfully!'),
-              backgroundColor: Colors.green.shade600,
-            ),
-          );
-        }
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content:
-                Text('Failed to submit callback request. Please try again.'),
-            backgroundColor: Colors.red.shade600,
-          ),
-        );
-      }
-    } finally {
-      if (mounted) {
-        setState(() => _loading = false);
-      }
-    }
+    // Navigate to request call screen
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => RequestCallScreen(
+          company: widget.company,
+          plan: widget.plan,
+          questionnaireId: widget.questionnaireId,
+          responseId: widget.responseId,
+        ),
+      ),
+    );
   }
 
   @override
@@ -758,127 +713,6 @@ class _CompanyDetailsScreenState extends State<CompanyDetailsScreen> {
           ],
         ),
       ),
-    );
-  }
-}
-
-class _CallbackRequestDialog extends StatefulWidget {
-  final String companyName;
-
-  const _CallbackRequestDialog({required this.companyName});
-
-  @override
-  State<_CallbackRequestDialog> createState() => _CallbackRequestDialogState();
-}
-
-class _CallbackRequestDialogState extends State<_CallbackRequestDialog> {
-  final _formKey = GlobalKey<FormState>();
-  final _nameController = TextEditingController();
-  final _phoneController = TextEditingController();
-  final _notesController = TextEditingController();
-  String _preferredTime = 'Morning (9 AM - 12 PM)';
-
-  final List<String> _timeOptions = [
-    'Morning (9 AM - 12 PM)',
-    'Afternoon (12 PM - 5 PM)',
-    'Evening (5 PM - 8 PM)',
-  ];
-
-  @override
-  void dispose() {
-    _nameController.dispose();
-    _phoneController.dispose();
-    _notesController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AlertDialog(
-      title: Text('Request Callback from ${widget.companyName}'),
-      content: Form(
-        key: _formKey,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextFormField(
-              controller: _nameController,
-              decoration: const InputDecoration(
-                labelText: 'Full Name *',
-                border: OutlineInputBorder(),
-              ),
-              validator: (value) {
-                if (value == null || value.trim().isEmpty) {
-                  return 'Please enter your name';
-                }
-                return null;
-              },
-            ),
-            const SizedBox(height: 16),
-            TextFormField(
-              controller: _phoneController,
-              decoration: const InputDecoration(
-                labelText: 'Phone Number *',
-                border: OutlineInputBorder(),
-              ),
-              keyboardType: TextInputType.phone,
-              validator: (value) {
-                if (value == null || value.trim().isEmpty) {
-                  return 'Please enter your phone number';
-                }
-                return null;
-              },
-            ),
-            const SizedBox(height: 16),
-            DropdownButtonFormField<String>(
-              value: _preferredTime,
-              decoration: const InputDecoration(
-                labelText: 'Preferred Call Time',
-                border: OutlineInputBorder(),
-              ),
-              items: _timeOptions.map((time) {
-                return DropdownMenuItem(
-                  value: time,
-                  child: Text(time),
-                );
-              }).toList(),
-              onChanged: (value) {
-                setState(() {
-                  _preferredTime = value!;
-                });
-              },
-            ),
-            const SizedBox(height: 16),
-            TextFormField(
-              controller: _notesController,
-              decoration: const InputDecoration(
-                labelText: 'Additional Notes (Optional)',
-                border: OutlineInputBorder(),
-              ),
-              maxLines: 3,
-            ),
-          ],
-        ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancel'),
-        ),
-        ElevatedButton(
-          onPressed: () {
-            if (_formKey.currentState!.validate()) {
-              Navigator.of(context).pop({
-                'name': _nameController.text.trim(),
-                'phone': _phoneController.text.trim(),
-                'preferredTime': _preferredTime,
-                'notes': _notesController.text.trim(),
-              });
-            }
-          },
-          child: const Text('Submit Request'),
-        ),
-      ],
     );
   }
 }

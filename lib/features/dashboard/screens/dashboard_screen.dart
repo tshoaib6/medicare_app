@@ -630,22 +630,99 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                       Expanded(
                                         child: OutlinedButton(
                                           onPressed: () async {
-                                            // Get plan details with questionnaires
+                                            // Fetch questionnaire for this specific plan
                                             try {
-                                              // For now, navigate directly to questionnaire
-                                              // In future, we could fetch plan details to get questionnaire ID
-                                              Navigator.pushNamed(
-                                                context,
-                                                QuestionnaireScreen.routeName,
-                                                arguments: {
-                                                  'planId': plan.id,
-                                                  'questionnaireId':
-                                                      1, // Default questionnaire ID
-                                                  'responseId':
-                                                      null, // New questionnaire
-                                                },
+                                              // Show loading indicator
+                                              showDialog(
+                                                context: context,
+                                                barrierDismissible: false,
+                                                builder: (context) =>
+                                                    const Center(
+                                                  child:
+                                                      CircularProgressIndicator(),
+                                                ),
                                               );
+
+                                              // Get questionnaires for this plan
+                                              final questionnaireResponse =
+                                                  await MedicareApiService
+                                                      .instance.questionnaires
+                                                      .getQuestionnaires(
+                                                planId: plan.id,
+                                                status: 'active',
+                                                page: 1,
+                                                perPage: 1,
+                                              );
+
+                                              // Close loading dialog
+                                              Navigator.of(context).pop();
+
+                                              // Handle new paginated API response structure
+                                              List questionnaires = [];
+
+                                              if (questionnaireResponse[
+                                                          'success'] ==
+                                                      true &&
+                                                  questionnaireResponse[
+                                                          'data'] !=
+                                                      null) {
+                                                final responseData =
+                                                    questionnaireResponse[
+                                                        'data'];
+                                                if (responseData is Map &&
+                                                    responseData['data']
+                                                        is List) {
+                                                  // New paginated structure: data.data contains the questionnaires
+                                                  questionnaires =
+                                                      responseData['data']
+                                                          as List;
+                                                } else if (responseData
+                                                    is List) {
+                                                  // Fallback for direct list response
+                                                  questionnaires = responseData;
+                                                } else if (responseData
+                                                    is Map) {
+                                                  // Single questionnaire object
+                                                  questionnaires = [
+                                                    responseData
+                                                  ];
+                                                }
+                                              }
+
+                                              if (questionnaires.isNotEmpty) {
+                                                final questionnaireId =
+                                                    questionnaires.first['id']
+                                                        as int;
+
+                                                Navigator.pushNamed(
+                                                  context,
+                                                  QuestionnaireScreen.routeName,
+                                                  arguments: {
+                                                    'planId': plan.id,
+                                                    'questionnaireId':
+                                                        questionnaireId,
+                                                    'responseId':
+                                                        null, // New questionnaire
+                                                  },
+                                                );
+                                              } else {
+                                                // No questionnaire found for this plan
+                                                ScaffoldMessenger.of(context)
+                                                    .showSnackBar(
+                                                  SnackBar(
+                                                    content: Text(
+                                                        'No questionnaire available for ${plan.title}'),
+                                                    backgroundColor:
+                                                        Colors.orange,
+                                                  ),
+                                                );
+                                              }
                                             } catch (e) {
+                                              // Close loading dialog if still open
+                                              if (Navigator.canPop(context)) {
+                                                Navigator.of(context).pop();
+                                              }
+
                                               ScaffoldMessenger.of(context)
                                                   .showSnackBar(
                                                 SnackBar(

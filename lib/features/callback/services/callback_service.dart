@@ -11,24 +11,28 @@ class CallbackService {
   // =============================================================================
 
   /// POST /api/v1/callback-requests - Submit Callback Request
+  /// Updated to match new simplified API specification
   Future<Map<String, dynamic>> submitCallbackRequest({
-    required String name,
-    required String phoneNumber,
-    required String preferredTime,
-    String? email,
+    required int userId,
+    required int companyId,
+    required String callDate,
+    required String callTime,
     String? message,
-    int? planId,
+    String? status,
+    String? adminNotes,
   }) async {
     try {
       Map<String, dynamic> body = {
-        'name': name,
-        'phone_number': phoneNumber,
-        'preferred_time': preferredTime,
+        'user_id': userId,
+        'company_id': companyId,
+        'call_date': callDate, // Format: YYYY-MM-DD
+        'call_time': callTime, // Format: HH:MM (24-hour)
       };
 
-      if (email != null) body['email'] = email;
-      if (message != null) body['message'] = message;
-      if (planId != null) body['plan_id'] = planId;
+      if (message != null && message.isNotEmpty) body['message'] = message;
+      if (status != null && status.isNotEmpty) body['status'] = status;
+      if (adminNotes != null && adminNotes.isNotEmpty)
+        body['admin_notes'] = adminNotes;
 
       final response = await _apiClient.post<Map<String, dynamic>>(
         ApiEndpoints.createCallbackRequest,
