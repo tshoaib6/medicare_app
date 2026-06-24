@@ -143,10 +143,22 @@ class _SplashScreenState extends State<SplashScreen>
                         ),
                       ],
                     ),
-                    child: const Icon(
-                      Icons.local_hospital_rounded,
-                      size: 60,
-                      color: Colors.white,
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(20),
+                      child: Image.asset(
+                        'assets/logo.png',
+                        width: 120,
+                        height: 120,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) {
+                          // Fallback to icon if image fails to load
+                          return const Icon(
+                            Icons.local_hospital_rounded,
+                            size: 60,
+                            color: Colors.white,
+                          );
+                        },
+                      ),
                     ),
                   ),
                 );
@@ -163,7 +175,7 @@ class _SplashScreenState extends State<SplashScreen>
                   child: Column(
                     children: [
                       Text(
-                        'Medicare',
+                        'myHealthCARE',
                         style: theme.textTheme.titleLarge?.copyWith(
                           fontSize: 32,
                           fontWeight: FontWeight.bold,

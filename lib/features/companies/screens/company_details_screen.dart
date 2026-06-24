@@ -115,44 +115,33 @@ class _CompanyDetailsScreenState extends State<CompanyDetailsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Colors.blue.shade50,
-              Colors.blue.shade100,
-            ],
-          ),
-        ),
-        child: SafeArea(
-          child: Column(
-            children: [
-              _buildHeader(),
-              Expanded(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    children: [
-                      _buildHeroSection(),
-                      const SizedBox(height: 16),
-                      _buildCompanyStatsCard(),
-                      const SizedBox(height: 16),
-                      _buildContactCard(),
-                      const SizedBox(height: 16),
-                      _buildPlanMatchCard(),
-                      const SizedBox(height: 16),
-                      _buildFeaturesCard(),
-                      const SizedBox(height: 16),
-                      _buildBottomActions(),
-                      const SizedBox(height: 20),
-                    ],
-                  ),
+      backgroundColor: const Color(0xFFFFFFFF),
+      body: SafeArea(
+        child: Column(
+          children: [
+            _buildHeader(),
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  children: [
+                    _buildHeroSection(),
+                    const SizedBox(height: 16),
+                    _buildCompanyStatsCard(),
+                    const SizedBox(height: 16),
+                    _buildContactCard(),
+                    const SizedBox(height: 16),
+                    _buildPlanMatchCard(),
+                    const SizedBox(height: 16),
+                    _buildFeaturesCard(),
+                    const SizedBox(height: 16),
+                    _buildBottomActions(),
+                    const SizedBox(height: 20),
+                  ],
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -160,63 +149,80 @@ class _CompanyDetailsScreenState extends State<CompanyDetailsScreen> {
 
   Widget _buildHeader() {
     return Container(
-      color: Colors.white,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Row(
-              children: [
-                IconButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  icon: const Icon(Icons.arrow_back, size: 20),
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
-                ),
-                const SizedBox(width: 12),
-                Row(
-                  children: [
-                    Stack(
-                      children: [
-                        Icon(Icons.shield,
-                            color: Colors.blue.shade600, size: 24),
-                        Positioned(
-                          top: 6,
-                          left: 6,
-                          child: Icon(Icons.favorite,
-                              color: Colors.red.shade500, size: 12),
-                        ),
-                      ],
+      color: const Color(0xFFFFFFFF),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Row(
+            children: [
+              IconButton(
+                onPressed: () => Navigator.of(context).pop(),
+                icon: const Icon(Icons.arrow_back,
+                    size: 20, color: Color(0xFF000000)),
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
+              ),
+              const SizedBox(width: 12),
+              Row(
+                children: [
+                  Container(
+                    width: 28,
+                    height: 28,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(6),
                     ),
-                    const SizedBox(width: 8),
-                    const Text(
-                      'MediCare+',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black87,
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(6),
+                      child: Image.asset(
+                        'assets/logo.png',
+                        width: 28,
+                        height: 28,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) {
+                          return Container(
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF3B82F6),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: const Icon(
+                              Icons.shield,
+                              color: Colors.white,
+                              size: 16,
+                            ),
+                          );
+                        },
                       ),
                     ),
-                  ],
-                ),
-              ],
-            ),
-            Row(
-              children: [
-                Icon(Icons.star, color: Colors.amber.shade400, size: 16),
-                const SizedBox(width: 4),
-                Text(
-                  widget.company.rating,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14,
                   ),
+                  const SizedBox(width: 8),
+                  const Text(
+                    'myHealthCARE',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF000000),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          Row(
+            children: [
+              Icon(Icons.star, color: Colors.amber.shade400, size: 16),
+              const SizedBox(width: 4),
+              Text(
+                widget.company.rating,
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                  color: Color(0xFF000000),
                 ),
-              ],
-            ),
-          ],
-        ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }

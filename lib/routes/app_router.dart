@@ -12,6 +12,7 @@ import '../features/questionnaire/screens/questionnaire_responses_screen.dart';
 import '../features/companies/screens/company_list_screen.dart';
 import '../features/companies/screens/company_details_screen.dart';
 import '../features/companies/screens/request_call_screen.dart';
+import '../features/subscription/screens/subscription_screen.dart';
 
 class AppRouter {
   static Route<dynamic> onGenerateRoute(RouteSettings settings) {
@@ -52,6 +53,7 @@ class AppRouter {
             plan: args['plan'],
             questionnaireId: args['questionnaireId'],
             responseId: args['responseId'],
+            initialSearch: args['initialSearch'] as String?,
           ),
         );
       case CompanyDetailsScreen.routeName:
@@ -74,6 +76,8 @@ class AppRouter {
             responseId: args['responseId'],
           ),
         );
+      case '/subscription':
+        return MaterialPageRoute(builder: (_) => const SubscriptionScreen());
       case DashboardScreen.routeName:
       default:
         return MaterialPageRoute(builder: (_) => const DashboardScreen());

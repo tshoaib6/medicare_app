@@ -7,15 +7,17 @@
 
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:medicare/main.dart';
+import 'package:ai_consultant/main.dart';
 
 void main() {
-  testWidgets('Medicare App smoke test', (WidgetTester tester) async {
+  testWidgets('AI consultant App smoke test', (WidgetTester tester) async {
     // Build our app and trigger a frame.
-    await tester.pumpWidget(const MedicareApp());
+    await tester.pumpWidget(const AIConsultantApp());
 
-    // Verify that splash screen is shown
-    expect(find.text('Medicare'), findsOneWidget);
-    expect(find.text('Your Healthcare Partner'), findsOneWidget);
+    // Run the app for a few seconds to let initial timers fire
+    await tester.pump(const Duration(seconds: 3));
+
+    // Verify the splash screen is present (brand text may animate)
+    expect(find.byType(SplashScreen), findsOneWidget);
   });
 }

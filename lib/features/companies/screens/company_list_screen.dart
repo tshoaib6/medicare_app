@@ -4,6 +4,7 @@ import '../../dashboard/models/plan_model.dart' as plan_model;
 import '../models/company_model.dart';
 import 'company_details_screen.dart';
 import '../../../core/widgets/info_button_widget.dart';
+import '../../../core/theme/colors.dart';
 
 class CompanyListScreen extends StatefulWidget {
   static const routeName = '/company-list';
@@ -11,12 +12,14 @@ class CompanyListScreen extends StatefulWidget {
   final plan_model.PlanModel plan;
   final int questionnaireId;
   final int responseId;
+  final String? initialSearch;
 
   const CompanyListScreen({
     super.key,
     required this.plan,
     required this.questionnaireId,
     required this.responseId,
+    this.initialSearch,
   });
 
   @override
@@ -51,6 +54,10 @@ class _CompanyListScreenState extends State<CompanyListScreen> {
   @override
   void initState() {
     super.initState();
+    if (widget.initialSearch != null && widget.initialSearch!.isNotEmpty) {
+      _searchTerm = widget.initialSearch!;
+      _searchController.text = widget.initialSearch!;
+    }
     _loadCompanies();
     _searchController.addListener(_onSearchChanged);
   }
@@ -86,8 +93,7 @@ class _CompanyListScreenState extends State<CompanyListScreen> {
         perPage: 50,
       );
 
-      final data = response['data'] as Map<String, dynamic>;
-      final companiesData = data['data'] as List<dynamic>;
+      final companiesData = _extractCompaniesData(response);
 
       final companies =
           companiesData.map((json) => CompanyModel.fromJson(json)).toList();
@@ -103,6 +109,34 @@ class _CompanyListScreenState extends State<CompanyListScreen> {
         _loading = false;
       });
     }
+  }
+
+  List<Map<String, dynamic>> _extractCompaniesData(
+      Map<String, dynamic> response) {
+    final rawData = response['data'];
+
+    if (rawData is List) {
+      return rawData
+          .whereType<Map>()
+          .map((item) => Map<String, dynamic>.from(item))
+          .toList();
+    }
+
+    if (rawData is Map<String, dynamic>) {
+      final dynamic nestedList = rawData['data'] ??
+          rawData['companies'] ??
+          rawData['items'] ??
+          rawData['results'];
+
+      if (nestedList is List) {
+        return nestedList
+            .whereType<Map>()
+            .map((item) => Map<String, dynamic>.from(item))
+            .toList();
+      }
+    }
+
+    return const [];
   }
 
   void _applyFilters() {
@@ -151,7 +185,7 @@ class _CompanyListScreenState extends State<CompanyListScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF0F8FF),
+      backgroundColor: const Color(0xFFFFFFFF),
       appBar: _buildAppBar(),
       body: _buildBody(),
     );
@@ -159,8 +193,8 @@ class _CompanyListScreenState extends State<CompanyListScreen> {
 
   PreferredSizeWidget _buildAppBar() {
     return AppBar(
-      backgroundColor: Colors.white,
-      foregroundColor: Colors.black87,
+      backgroundColor: const Color(0xFFFFFFFF),
+      foregroundColor: const Color(0xFF000000),
       elevation: 0,
       title: Row(
         children: [
@@ -168,22 +202,38 @@ class _CompanyListScreenState extends State<CompanyListScreen> {
             width: 32,
             height: 32,
             decoration: BoxDecoration(
-              color: Colors.blue.shade600,
               borderRadius: BorderRadius.circular(8),
             ),
-            child: const Icon(
-              Icons.shield,
-              color: Colors.white,
-              size: 18,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: Image.asset(
+                'assets/logo.png',
+                width: 32,
+                height: 32,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) {
+                  return Container(
+                    decoration: BoxDecoration(
+                      color: AppColors.info,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Icon(
+                      Icons.shield,
+                      color: Colors.white,
+                      size: 18,
+                    ),
+                  );
+                },
+              ),
             ),
           ),
           const SizedBox(width: 8),
           const Text(
-            'MediCare+',
+            'myHealthCARE',
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
-              color: Colors.black87,
+              color: Color(0xFF000000),
             ),
           ),
         ],
@@ -195,7 +245,7 @@ class _CompanyListScreenState extends State<CompanyListScreen> {
         preferredSize: const Size.fromHeight(1),
         child: Container(
           height: 1,
-          color: Colors.grey.shade200,
+          color: const Color(0xFFE5E7EB),
         ),
       ),
     );

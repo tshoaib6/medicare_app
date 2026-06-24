@@ -420,7 +420,7 @@ class _QuestionnaireScreenState extends State<QuestionnaireScreen> {
                         ),
                         const SizedBox(width: 12),
                         const Text(
-                          'MediCare+',
+                          'myHealthCARE',
                           style: TextStyle(
                               fontSize: 18, fontWeight: FontWeight.bold),
                         ),

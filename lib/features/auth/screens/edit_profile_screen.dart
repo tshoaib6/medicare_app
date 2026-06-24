@@ -33,6 +33,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   String? _isDecisionMaker;
   String? _hasMedicarePartB;
 
+  // Medicare Insurance Card Upload
+  bool _insuranceCardFrontUploaded = false;
+  bool _insuranceCardBackUploaded = false;
+  bool _uploadingCard = false;
+  String? _frontCardFileName;
+  String? _backCardFileName;
+
   @override
   void initState() {
     super.initState();
@@ -172,7 +179,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                     ),
                                     const SizedBox(width: 8),
                                     Text(
-                                      'MediCare+',
+                                      'myHealthCARE',
                                       style: theme.textTheme.headlineMedium
                                           ?.copyWith(
                                         fontWeight: FontWeight.bold,
@@ -206,7 +213,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
                           // Note at bottom
                           Text(
-                            'Required fields are marked with an asterisk (*). Complete your MediCare+ profile setup.',
+                            'Required fields are marked with an asterisk (*). Complete your myHealthCARE profile setup.',
                             style: theme.textTheme.bodySmall?.copyWith(
                               color: AppColors.textSecondary,
                             ),
@@ -566,6 +573,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     ],
                   ),
 
+                  const SizedBox(height: 24),
+
+                  // Medicare Documents Section
+                  _buildMedicareDocumentsSection(theme),
+
                   const SizedBox(height: 32),
 
                   PrimaryButton(
@@ -623,6 +635,372 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildMedicareDocumentsSection(ThemeData theme) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildSectionTitle('Medicare Insurance Card', theme),
+        const SizedBox(height: 16),
+
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.blue.shade50,
+            border: Border.all(color: Colors.blue.shade200),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(
+                    Icons.card_membership,
+                    color: AppColors.info,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Upload Your Medicare Card',
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.info,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Upload both sides of your Medicare health insurance card for verification and faster processing.',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: Colors.blue.shade700,
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        const SizedBox(height: 20),
+
+        // Front of Card
+        _buildCardUploadTile(
+          theme,
+          title: 'Front of Medicare Card',
+          subtitle: 'Upload the front side with your name and Medicare number',
+          icon: Icons.credit_card,
+          isUploaded: _insuranceCardFrontUploaded,
+          fileName: _frontCardFileName,
+          onTap: () => _pickInsuranceCard(true),
+        ),
+
+        const SizedBox(height: 16),
+
+        // Back of Card
+        _buildCardUploadTile(
+          theme,
+          title: 'Back of Medicare Card',
+          subtitle: 'Upload the back side with additional details',
+          icon: Icons.flip_to_back,
+          isUploaded: _insuranceCardBackUploaded,
+          fileName: _backCardFileName,
+          onTap: () => _pickInsuranceCard(false),
+        ),
+
+        if (_insuranceCardFrontUploaded || _insuranceCardBackUploaded) ...[
+          const SizedBox(height: 16),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.green.shade50,
+              border: Border.all(color: Colors.green.shade200),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.check_circle_outline,
+                  color: Colors.green.shade600,
+                  size: 20,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Your Medicare card images have been uploaded successfully. They will be securely stored and used for verification purposes only.',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: Colors.green.shade700,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildCardUploadTile(
+    ThemeData theme, {
+    required String title,
+    required String subtitle,
+    required IconData icon,
+    required bool isUploaded,
+    String? fileName,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: _uploadingCard ? null : onTap,
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          border: Border.all(
+            color: isUploaded ? Colors.green.shade300 : Colors.grey.shade300,
+            width: 2,
+            style: BorderStyle.solid,
+          ),
+          borderRadius: BorderRadius.circular(12),
+          color: isUploaded ? Colors.green.shade50 : Colors.grey.shade50,
+        ),
+        child: Column(
+          children: [
+            if (isUploaded && fileName != null) ...[
+              Container(
+                height: 120,
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: Colors.green.shade100,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.green.shade300),
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.check_circle,
+                      color: Colors.green.shade600,
+                      size: 40,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      fileName,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: Colors.green.shade700,
+                        fontWeight: FontWeight.w500,
+                      ),
+                      textAlign: TextAlign.center,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
+            ],
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: isUploaded
+                        ? Colors.green.shade100
+                        : AppColors.info.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(
+                    isUploaded ? Icons.check_circle : icon,
+                    color: isUploaded ? Colors.green.shade600 : AppColors.info,
+                    size: 24,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          fontWeight: FontWeight.w600,
+                          color: isUploaded
+                              ? Colors.green.shade700
+                              : Colors.black87,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        isUploaded ? 'Image uploaded successfully' : subtitle,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: isUploaded
+                              ? Colors.green.shade600
+                              : AppColors.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                if (_uploadingCard)
+                  SizedBox(
+                    height: 20,
+                    width: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(AppColors.info),
+                    ),
+                  )
+                else
+                  Icon(
+                    isUploaded ? Icons.edit : Icons.upload,
+                    color: isUploaded ? Colors.green.shade600 : AppColors.info,
+                    size: 20,
+                  ),
+              ],
+            ),
+            if (!isUploaded) ...[
+              const SizedBox(height: 12),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                decoration: BoxDecoration(
+                  border: Border.all(
+                    color: AppColors.info.withOpacity(0.3),
+                    style: BorderStyle.solid,
+                  ),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Text(
+                  'Tap to upload photo',
+                  textAlign: TextAlign.center,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: AppColors.info,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _pickInsuranceCard(bool isFront) async {
+    if (_uploadingCard) return;
+
+    final String? source = await _showImageSourceDialog();
+    if (source == null) return;
+
+    setState(() => _uploadingCard = true);
+
+    // Simulate upload delay
+    await Future.delayed(const Duration(milliseconds: 1500));
+
+    setState(() {
+      if (isFront) {
+        _insuranceCardFrontUploaded = true;
+        _frontCardFileName = 'medicare_card_front.jpg';
+      } else {
+        _insuranceCardBackUploaded = true;
+        _backCardFileName = 'medicare_card_back.jpg';
+      }
+      _uploadingCard = false;
+    });
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            '${isFront ? "Front" : "Back"} of Medicare card uploaded successfully!',
+          ),
+          backgroundColor: AppColors.success,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
+
+  Future<String?> _showImageSourceDialog() async {
+    return showModalBottomSheet<String>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        margin: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: AppColors.info.withOpacity(0.1),
+                borderRadius:
+                    const BorderRadius.vertical(top: Radius.circular(16)),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.add_a_photo, color: AppColors.info),
+                  const SizedBox(width: 12),
+                  Text(
+                    'Upload Medicare Card',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.info,
+                        ),
+                  ),
+                ],
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                children: [
+                  ListTile(
+                    leading: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.blue.shade100,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child:
+                          Icon(Icons.camera_alt, color: Colors.blue.shade700),
+                    ),
+                    title: const Text('Take Photo'),
+                    subtitle: const Text('Use camera to capture card'),
+                    onTap: () => Navigator.pop(context, 'camera'),
+                  ),
+                  ListTile(
+                    leading: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.purple.shade100,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Icon(Icons.photo_library,
+                          color: Colors.purple.shade700),
+                    ),
+                    title: const Text('Choose from Gallery'),
+                    subtitle: const Text('Select existing photo'),
+                    onTap: () => Navigator.pop(context, 'gallery'),
+                  ),
+                  const SizedBox(height: 8),
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text('Cancel'),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 

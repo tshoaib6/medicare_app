@@ -232,7 +232,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                             const SizedBox(width: 8),
                             Text(
-                              'Medicare +',
+                              'myHealthCARE',
                               style: theme.textTheme.displayLarge?.copyWith(
                                 fontSize: 32,
                                 fontWeight: FontWeight.bold,
@@ -330,7 +330,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                                   // Password Field
                                   Text(
-                                    'Password',
+                                    'Passwords',
                                     style: theme.textTheme.bodyMedium?.copyWith(
                                       fontWeight: FontWeight.w500,
                                       color: AppColors.primary,

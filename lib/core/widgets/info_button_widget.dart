@@ -220,7 +220,7 @@ class _InfoButtonWidgetState extends State<InfoButtonWidget> {
   String _getDefaultDescription(String screenName) {
     switch (screenName) {
       case 'Dashboard':
-        return 'Welcome to your Medicare+ Dashboard. This is your central hub for managing all your Medicare benefits and healthcare needs. Browse available plans, compare options, and access quick actions.';
+        return 'Welcome to your myHealthCARE Dashboard. This is your central hub for managing all your Medicare benefits and healthcare needs. Browse available plans, compare options, and access quick actions.';
 
       case 'Questionnaire':
         return 'Complete this questionnaire to help us find the best Medicare plan for your specific needs. Answer all questions honestly for personalized recommendations.';
@@ -241,10 +241,10 @@ class _InfoButtonWidgetState extends State<InfoButtonWidget> {
         return 'Manage your personal information, preferences, and account settings. Keep your profile up to date for better Medicare recommendations.';
 
       case 'Login':
-        return 'Sign in to your Medicare+ account to access personalized plan recommendations, saved preferences, and your application history.';
+        return 'Sign in to your myHealthCARE account to access personalized plan recommendations, saved preferences, and your application history.';
 
       case 'Sign Up':
-        return 'Create your Medicare+ account to get started with personalized Medicare plan recommendations and expert guidance.';
+        return 'Create your myHealthCARE account to get started with personalized Medicare plan recommendations and expert guidance.';
 
       case 'Password Recovery':
         return 'Recover access to your account by entering your email address. We\'ll send you instructions to reset your password.';

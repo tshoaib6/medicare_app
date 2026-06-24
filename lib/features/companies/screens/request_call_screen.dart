@@ -384,7 +384,7 @@ class _RequestCallScreenState extends State<RequestCallScreen> {
                     ),
                     const SizedBox(width: 8),
                     const Text(
-                      'MediCare+',
+                      'myHealthCARE',
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,

@@ -182,7 +182,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                             ),
                             const SizedBox(width: 8),
                             Text(
-                              'Medicare +',
+                              'myHealthCARE',
                               style: theme.textTheme.displayLarge?.copyWith(
                                 fontSize: 32,
                                 fontWeight: FontWeight.bold,

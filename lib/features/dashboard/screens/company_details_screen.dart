@@ -120,7 +120,7 @@ class CompanyDetailsScreen extends StatelessWidget {
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    'MediCare+',
+                    'myHealthCARE',
                     style: theme.textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.bold,
                       color: Colors.black,
